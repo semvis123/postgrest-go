@@ -88,7 +88,7 @@ func (q *QueryBuilder) Select(columns, count string, head bool) *FilterBuilder {
 			q.headers["Prefer"] = fmt.Sprintf("count=%s", count)
 		}
 	}
-	return &FilterBuilder{client: q.client, method: q.method, body: q.body, tableName: q.tableName, headers: q.headers, params: q.params}
+	return &FilterBuilder{Client: q.client, Method: q.method, Body: q.body, TableName: q.tableName, Headers: q.headers, Params: q.params}
 }
 
 // Insert performs an insertion into the table.
@@ -125,7 +125,7 @@ func (q *QueryBuilder) Insert(value interface{}, upsert bool, onConflict, return
 		byteBody = jsonBody
 	}
 	q.body = byteBody
-	return &FilterBuilder{client: q.client, method: q.method, body: q.body, tableName: q.tableName, headers: q.headers, params: q.params}
+	return &FilterBuilder{Client: q.client, Method: q.method, Body: q.body, TableName: q.tableName, Headers: q.headers, Params: q.params}
 }
 
 // Upsert performs an upsert into the table.
@@ -159,7 +159,7 @@ func (q *QueryBuilder) Upsert(value interface{}, onConflict, returning, count st
 		byteBody = jsonBody
 	}
 	q.body = byteBody
-	return &FilterBuilder{client: q.client, method: q.method, body: q.body, tableName: q.tableName, headers: q.headers, params: q.params}
+	return &FilterBuilder{Client: q.client, Method: q.method, Body: q.body, TableName: q.tableName, Headers: q.headers, Params: q.params}
 }
 
 // Delete performs a deletion from the table.
@@ -177,7 +177,7 @@ func (q *QueryBuilder) Delete(returning, count string) *FilterBuilder {
 		headerList = append(headerList, "count="+count)
 	}
 	q.headers["Prefer"] = strings.Join(headerList, ",")
-	return &FilterBuilder{client: q.client, method: q.method, body: q.body, tableName: q.tableName, headers: q.headers, params: q.params}
+	return &FilterBuilder{Client: q.client, Method: q.method, Body: q.body, TableName: q.tableName, Headers: q.headers, Params: q.params}
 }
 
 // Update performs an update on the table.
@@ -207,5 +207,5 @@ func (q *QueryBuilder) Update(value interface{}, returning, count string) *Filte
 		byteBody = jsonBody
 	}
 	q.body = byteBody
-	return &FilterBuilder{client: q.client, method: q.method, body: q.body, tableName: q.tableName, headers: q.headers, params: q.params}
+	return &FilterBuilder{Client: q.client, Method: q.method, Body: q.body, TableName: q.tableName, Headers: q.headers, Params: q.params}
 }

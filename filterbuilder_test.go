@@ -349,22 +349,22 @@ func TestFilterAppend(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			client := NewClient("http://localhost:3000", "", nil)
 			fb := &FilterBuilder{
-				client:    client,
-				method:    "GET",
-				tableName: "test",
-				headers:   make(map[string]string),
-				params:    make(map[string]string),
+				Client:    client,
+				Method:    "GET",
+				TableName: "test",
+				Headers:   make(map[string]string),
+				Params:    make(map[string]string),
 			}
 
 			result := tt.build(fb)
 
 			// Check that we got the expected params
-			if len(result.params) != len(tt.expected) {
-				t.Errorf("Expected %d params, got %d", len(tt.expected), len(result.params))
+			if len(result.Params) != len(tt.expected) {
+				t.Errorf("Expected %d params, got %d", len(tt.expected), len(result.Params))
 			}
 
 			for key, expectedValue := range tt.expected {
-				if actualValue, ok := result.params[key]; !ok {
+				if actualValue, ok := result.Params[key]; !ok {
 					t.Errorf("Expected param %s not found", key)
 				} else if actualValue != expectedValue {
 					t.Errorf("Param %s: expected %s, got %s", key, expectedValue, actualValue)
@@ -372,7 +372,7 @@ func TestFilterAppend(t *testing.T) {
 			}
 
 			// Check that no unexpected params exist
-			for key := range result.params {
+			for key := range result.Params {
 				if _, ok := tt.expected[key]; !ok {
 					t.Errorf("Unexpected param %s found", key)
 				}

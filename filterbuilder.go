@@ -11,64 +11,64 @@ import (
 
 // FilterBuilder describes a builder for a filtered result set.
 type FilterBuilder struct {
-	client    *Client
-	method    string // One of "HEAD", "GET", "POST", "PUT", "DELETE"
-	body      []byte
-	tableName string
-	headers   map[string]string
-	params    map[string]string
+	Client    *Client
+	Method    string // One of "HEAD", "GET", "POST", "PUT", "DELETE"
+	Body      []byte
+	TableName string
+	Headers   map[string]string
+	Params    map[string]string
 }
 
 // ExecuteString runs the PostgREST query, returning the result as a JSON
 // string.
 func (f *FilterBuilder) ExecuteString() (string, int64, error) {
-	return executeString(context.Background(), f.client, f.method, f.body, []string{f.tableName}, f.headers, f.params)
+	return executeString(context.Background(), f.Client, f.Method, f.Body, []string{f.TableName}, f.Headers, f.Params)
 }
 
 // ExecuteStringWithContext runs the PostgREST query, returning the result as
 // a JSON string.
 func (f *FilterBuilder) ExecuteStringWithContext(ctx context.Context) (string, int64, error) {
-	return executeString(ctx, f.client, f.method, f.body, []string{f.tableName}, f.headers, f.params)
+	return executeString(ctx, f.Client, f.Method, f.Body, []string{f.TableName}, f.Headers, f.Params)
 }
 
 // Execute runs the PostgREST query, returning the result as a byte slice.
 func (f *FilterBuilder) Execute() ([]byte, int64, error) {
-	return execute(context.Background(), f.client, f.method, f.body, []string{f.tableName}, f.headers, f.params)
+	return execute(context.Background(), f.Client, f.Method, f.Body, []string{f.TableName}, f.Headers, f.Params)
 }
 
 // ExecuteWithContext runs the PostgREST query with the given context,
 // returning the result as a byte slice.
 func (f *FilterBuilder) ExecuteWithContext(ctx context.Context) ([]byte, int64, error) {
-	return execute(ctx, f.client, f.method, f.body, []string{f.tableName}, f.headers, f.params)
+	return execute(ctx, f.Client, f.Method, f.Body, []string{f.TableName}, f.Headers, f.Params)
 }
 
 // ExecuteTo runs the PostgREST query, encoding the result to the supplied
 // interface. Note that the argument for the to parameter should always be a
 // reference to a slice.
 func (f *FilterBuilder) ExecuteTo(to interface{}) (countType, error) {
-	return executeTo(context.Background(), f.client, f.method, f.body, to, []string{f.tableName}, f.headers, f.params)
+	return executeTo(context.Background(), f.Client, f.Method, f.Body, to, []string{f.TableName}, f.Headers, f.Params)
 }
 
 // ExecuteToWithContext runs the PostgREST query with the given context,
 // encoding the result to the supplied interface. Note that the argument for
 // the to parameter should always be a reference to a slice.
 func (f *FilterBuilder) ExecuteToWithContext(ctx context.Context, to interface{}) (countType, error) {
-	return executeTo(ctx, f.client, f.method, f.body, to, []string{f.tableName}, f.headers, f.params)
+	return executeTo(ctx, f.Client, f.Method, f.Body, to, []string{f.TableName}, f.Headers, f.Params)
 }
 
 var filterOperators = []string{"eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike", "is", "in", "cs", "cd", "sl", "sr", "nxl", "nxr", "adj", "ov", "fts", "plfts", "phfts", "wfts"}
 
 // appendFilter is a helper method that appends a filter to existing filters on a column
 func (f *FilterBuilder) appendFilter(column, filterValue string) *FilterBuilder {
-	if existing, ok := f.params[column]; ok && existing != "" {
+	if existing, ok := f.Params[column]; ok && existing != "" {
 		// If a filter already exists for this column, combine with 'and'
-		f.params["and"] = fmt.Sprintf("(%s.%s,%s.%s)", column, existing, column, filterValue)
-		delete(f.params, column)
-	} else if existingAnd, ok := f.params["and"]; ok {
+		f.Params["and"] = fmt.Sprintf("(%s.%s,%s.%s)", column, existing, column, filterValue)
+		delete(f.Params, column)
+	} else if existingAnd, ok := f.Params["and"]; ok {
 		// If an 'and' parameter already exists, append to it
-		f.params["and"] = strings.TrimSuffix(existingAnd, ")") + "," + column + "." + filterValue + ")"
+		f.Params["and"] = strings.TrimSuffix(existingAnd, ")") + "," + column + "." + filterValue + ")"
 	} else {
-		f.params[column] = filterValue
+		f.Params[column] = filterValue
 	}
 	return f
 }
@@ -86,7 +86,7 @@ func isOperator(value string) bool {
 // operators, see: https://postgrest.org/en/stable/api.html#operators
 func (f *FilterBuilder) Filter(column, operator, value string) *FilterBuilder {
 	if !isOperator(operator) {
-		f.client.ClientError = fmt.Errorf("invalid filter operator")
+		f.Client.ClientError = fmt.Errorf("invalid filter operator")
 		return f
 	}
 	return f.appendFilter(column, fmt.Sprintf("%s.%s", operator, value))
@@ -94,18 +94,18 @@ func (f *FilterBuilder) Filter(column, operator, value string) *FilterBuilder {
 
 func (f *FilterBuilder) And(filters, foreignTable string) *FilterBuilder {
 	if foreignTable != "" {
-		f.params[foreignTable+".and"] = fmt.Sprintf("(%s)", filters)
+		f.Params[foreignTable+".and"] = fmt.Sprintf("(%s)", filters)
 	} else {
-		f.params[foreignTable+"and"] = fmt.Sprintf("(%s)", filters)
+		f.Params[foreignTable+"and"] = fmt.Sprintf("(%s)", filters)
 	}
 	return f
 }
 
 func (f *FilterBuilder) Or(filters, foreignTable string) *FilterBuilder {
 	if foreignTable != "" {
-		f.params[foreignTable+".or"] = fmt.Sprintf("(%s)", filters)
+		f.Params[foreignTable+".or"] = fmt.Sprintf("(%s)", filters)
 	} else {
-		f.params[foreignTable+"or"] = fmt.Sprintf("(%s)", filters)
+		f.Params[foreignTable+"or"] = fmt.Sprintf("(%s)", filters)
 	}
 	return f
 }
@@ -199,7 +199,7 @@ func (f *FilterBuilder) ContainedBy(column string, value []string) *FilterBuilde
 func (f *FilterBuilder) ContainsObject(column string, value interface{}) *FilterBuilder {
 	sum, err := json.Marshal(value)
 	if err != nil {
-		f.client.ClientError = err
+		f.Client.ClientError = err
 		return f
 	}
 	return f.appendFilter(column, "cs."+string(sum))
@@ -208,7 +208,7 @@ func (f *FilterBuilder) ContainsObject(column string, value interface{}) *Filter
 func (f *FilterBuilder) ContainedByObject(column string, value interface{}) *FilterBuilder {
 	sum, err := json.Marshal(value)
 	if err != nil {
-		f.client.ClientError = err
+		f.Client.ClientError = err
 		return f
 	}
 	return f.appendFilter(column, "cd."+string(sum))
@@ -257,7 +257,7 @@ func (f *FilterBuilder) TextSearch(column, userQuery, config, tsType string) *Fi
 	} else if tsType == "" {
 		typePart = ""
 	} else {
-		f.client.ClientError = fmt.Errorf("invalid text search type")
+		f.Client.ClientError = fmt.Errorf("invalid text search type")
 		return f
 	}
 	if config != "" {
@@ -283,9 +283,9 @@ var DefaultOrderOpts = OrderOpts{
 // Limit the result to the specified count.
 func (f *FilterBuilder) Limit(count int, foreignTable string) *FilterBuilder {
 	if foreignTable != "" {
-		f.params[foreignTable+".limit"] = strconv.Itoa(count)
+		f.Params[foreignTable+".limit"] = strconv.Itoa(count)
 	} else {
-		f.params["limit"] = strconv.Itoa(count)
+		f.Params["limit"] = strconv.Itoa(count)
 	}
 
 	return f
@@ -313,11 +313,11 @@ func (f *FilterBuilder) Order(column string, opts *OrderOpts) *FilterBuilder {
 		nullsString = "nullsfirst"
 	}
 
-	existingOrder, ok := f.params[key]
+	existingOrder, ok := f.Params[key]
 	if ok && existingOrder != "" {
-		f.params[key] = fmt.Sprintf("%s,%s.%s.%s", existingOrder, column, ascendingString, nullsString)
+		f.Params[key] = fmt.Sprintf("%s,%s.%s.%s", existingOrder, column, ascendingString, nullsString)
 	} else {
-		f.params[key] = fmt.Sprintf("%s.%s.%s", column, ascendingString, nullsString)
+		f.Params[key] = fmt.Sprintf("%s.%s.%s", column, ascendingString, nullsString)
 	}
 
 	return f
@@ -326,11 +326,11 @@ func (f *FilterBuilder) Order(column string, opts *OrderOpts) *FilterBuilder {
 // Range Limits the result to rows within the specified range, inclusive.
 func (f *FilterBuilder) Range(from, to int, foreignTable string) *FilterBuilder {
 	if foreignTable != "" {
-		f.params[foreignTable+".offset"] = strconv.Itoa(from)
-		f.params[foreignTable+".limit"] = strconv.Itoa(to - from + 1)
+		f.Params[foreignTable+".offset"] = strconv.Itoa(from)
+		f.Params[foreignTable+".limit"] = strconv.Itoa(to - from + 1)
 	} else {
-		f.params["offset"] = strconv.Itoa(from)
-		f.params["limit"] = strconv.Itoa(to - from + 1)
+		f.Params["offset"] = strconv.Itoa(from)
+		f.Params["limit"] = strconv.Itoa(to - from + 1)
 	}
 	return f
 }
@@ -338,6 +338,6 @@ func (f *FilterBuilder) Range(from, to int, foreignTable string) *FilterBuilder 
 // Single Retrieves only one row from the result. The total result set must be one row
 // (e.g., by using Limit). Otherwise, this will result in an error.
 func (f *FilterBuilder) Single() *FilterBuilder {
-	f.headers["Accept"] = "application/vnd.pgrst.object+json"
+	f.Headers["Accept"] = "application/vnd.pgrst.object+json"
 	return f
 }
